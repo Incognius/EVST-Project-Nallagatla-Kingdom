@@ -117,8 +117,17 @@ a random background and with a target-group background (TGB), and scored four wa
 | random CV | +0.16 | +0.33 | +0.13 | +0.10 | +0.02 | +0.13 |
 | spatial-block CV | +0.08 | +0.21 | +0.08 | +0.01 | −0.11 | +0.10 |
 
-**[pending: block-size sensitivity (blockCV ranges ×0.5, ×1, ×2), because our variogram ranges
-disagreed with the R blockCV package]**
+**Block-size sensitivity.** Our own variogram ranges disagreed with the R blockCV package, so we
+re-ran spatial CV for GLM and BRT using blockCV's ranges at ×0.5, ×1 and ×2. The blocks are capped
+at one-fifth of the extent; at ×1 they match the main run in 5 of 6 regions.
+
+| Block size | spatial CV says TGB helps | agrees with truth | rank corr. | optimism (uncorrected) | target-group regime rank corr. |
+|---|---|---|---|---|---|
+| ×0.5 | 12% | 44% | −0.13 | +0.076 | +0.37 |
+| ×1 | 16% | 43% | −0.18 | +0.047 | +0.28 |
+| ×2 | 18% | 43% | −0.11 | +0.018 | +0.20 |
+
+Larger blocks shrink the *optimism* (Ploton's effect) but never fix *which model is chosen*.
 
 ### 4.2 Western Ghats bias anatomy (E01)  **[pending]**
 ### 4.3 Virtual species: capacity vs leakage (E03)  **[pending]**

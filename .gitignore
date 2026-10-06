@@ -1,0 +1,13 @@
+.venv/
+/data/
+papers/*.pdf
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+kaggle.json
+.env
+r_checks/lib/
+papers/*.xml
+results/*.log
+*.tmp
+*.egg-info/

@@ -1,0 +1,9 @@
+model,bg,pa_auc,cv_rand_auc,cv_spat_auc,cv_spat_tg_auc
+BRT,random,0.713,0.842,0.759,0.664
+BRT,tgb,0.738,0.767,0.698,0.69
+GLM,random,0.711,0.83,0.748,0.661
+GLM,tgb,0.723,0.756,0.689,0.676
+MaxEnt,random,0.716,0.855,0.782,0.666
+MaxEnt,tgb,0.746,0.756,0.697,0.706
+RF,random,0.731,0.867,0.789,0.679
+RF,tgb,0.755,0.767,0.705,0.714

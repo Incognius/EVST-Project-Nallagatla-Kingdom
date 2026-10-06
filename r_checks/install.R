@@ -1,0 +1,6 @@
+lib <- normalizePath("r_checks/lib"); .libPaths(c(lib, .libPaths()))
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+pk <- c("terra", "sf", "blockCV", "disdat", "virtualspecies", "maxnet", "remotes", "sampbias", "dismo", "precrec")
+for (p in pk) if (!requireNamespace(p, quietly = TRUE)) try(install.packages(p, lib = lib, type = "binary"))
+if (!requireNamespace("multispeciesPP", quietly = TRUE)) try(remotes::install_github("wfithian/multispeciesPP", lib = lib, upgrade = "never"))
+for (p in c(pk, "multispeciesPP")) cat(p, requireNamespace(p, quietly = TRUE), "\n")

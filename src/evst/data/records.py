@@ -74,7 +74,7 @@ def load_inat() -> pd.DataFrame:
 
 def raw_records() -> pd.DataFrame:
     parts = [load_inat()] if (RAW / "inat" / "wg_observations.tsv").exists() else []
-    snaps = sorted((RAW / "gbif").glob("wg_bbox_*.parquet")) or sorted((RAW / "gbif").glob("wg_parts_*/*.parquet"))
+    snaps = sorted((RAW / "gbif").glob("wg_bbox_*.parquet"))
     if snaps:
         g = pd.concat([pd.read_parquet(p) for p in snaps], ignore_index=True)
         if parts:

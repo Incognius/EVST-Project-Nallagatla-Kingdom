@@ -249,8 +249,11 @@ models the bias best, not the one that removes it.*
 ![](figures/E04_gaps.png)
 
 **1. Correction changes the map, not just the scores.**
-- The naive richness map peaks near Mumbai–Pune and the coast, where records are densest.
-- The TGB map peaks in the wet evergreen forests of the central and southern Ghats.
+- With GLM, the naive map's richest 10% of cells are partly built-up (7% built, 78% tree cover) and
+  heavily recorded (321 records per 5 km cell, against 65 on average).
+- The corrected map's richest 10% are dense forest (92% tree cover, 1% built) with 2.5× fewer
+  records (127 per cell).
+- With BRT the shift is much weaker (tree cover 65% → 66%).
 - The correlation between predicted richness and the number of pre-2019 records falls from 0.41 to
   0.13 (GLM) and from 0.62 to 0.33 (BRT): the uncorrected map is largely a map of observers.
 
@@ -292,7 +295,7 @@ Reasons to test in phase B:
    the one that best *removes* it.
 5. In the Western Ghats, records are about 34× denser per km² within 100 m of a road than 2–5 km
    away. Recording volume rose 61-fold since 2008 while new knowledge per record fell 56%.
-   Correcting for bias moves predicted richness from cities and coast into the evergreen Ghats.
+   Correcting for bias moves predicted hotspots from built-up, heavily recorded cells into dense forest.
    But the 2019–2026 records do not yet confirm that corrected maps predict *where new records
    appear* beyond observer effort. That is an honest negative result for H5 at this stage.
 6. Corrections to our literature review, from reading the full texts:

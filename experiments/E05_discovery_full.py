@@ -44,6 +44,7 @@ rng = np.random.default_rng(0)
 Om, ph = rng.normal(0, 1 / 12.0, (2, 24)), rng.uniform(0, 2 * np.pi, 24)
 RFF = np.sqrt(2 / 24) * np.cos(np.column_stack([r, c]) @ Om + ph)
 ONE = np.ones((len(cells), 1))
+blocks = (r // 10) * 1000 + (c // 10)
 VARIANTS = {
     "bayes": (np.hstack([ONE, Ez, RFF]), np.hstack([ONE, Az])),
     "bayes_no_spatial": (np.hstack([ONE, Ez]), np.hstack([ONE, Az])),
@@ -116,7 +117,10 @@ for group in a.groups.split(","):
                 if sm_.sum() < 20:
                     continue
                 diff = ll[k][sm_] - ll["effort_glm"][sm_]
-                bs = [rng.choice(diff, len(diff)).mean() for _ in range(a.boot)]
+                blk = blocks[evf][sm_]
+                ub = np.unique(blk)
+                members = [np.flatnonzero(blk == b_) for b_ in ub]
+                bs = [diff[np.concatenate([members[j] for j in rng.integers(0, len(ub), len(ub))])].mean() for _ in range(a.boot)]
                 score_rows.append({"group": group, "origin": T, "model": k, "stratum": sname, "n_cells": int(sm_.sum()),
                                    "logscore": ll[k][sm_].mean(), "delta_vs_effort_glm": diff.mean(),
                                    "ci_lo": np.quantile(bs, 0.025), "ci_hi": np.quantile(bs, 0.975)})
@@ -144,9 +148,8 @@ for group in a.groups.split(","):
 S = pd.DataFrame(score_rows)
 C = pd.DataFrame(cov_rows)
 V = pd.DataFrame(val_rows)
-S.to_csv(RESULTS / "E05_full_scores.csv", index=False)
-C.to_csv(RESULTS / "E05_full_coverage.csv", index=False)
-V.to_csv(RESULTS / "E05_full_discovery_value.csv", index=False)
+S.to_csv(RESULTS / "E05_full_scores_blockboot.csv", index=False)
+
 
 plt.rcParams.update({"figure.dpi": 150, "font.size": 9})
 fig, ax = plt.subplots(1, 2, figsize=(10, 3.6))
@@ -164,7 +167,7 @@ sg.plot.barh(ax=ax[1], color="#D2601A")
 ax[1].axvline(0, c="k", lw=0.6)
 ax[1].set_xlabel("log score gain vs effort GLM, origin 2018")
 fig.tight_layout()
-fig.savefig(FIGURES / "E05_discovery_full.png")
+fig.savefig(FIGURES / "E05_discovery_full_blockboot.png")
 print(S[(S.group == "all") & (S.stratum == "all")].pivot_table(index="model", columns="origin", values="delta_vs_effort_glm").round(3))
 print(C.groupby("model").coverage_80.mean().round(3))
 print(V.groupby("model")[["spearman_rate", "top10_realized_rate", "mean_realized_rate"]].mean().round(3))

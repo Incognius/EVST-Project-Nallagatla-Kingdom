@@ -49,11 +49,11 @@ baselines are calibrated on an earlier split (≤ T−3 → T−2…T), so nothi
 
 | Forecast origin | 2016 | 2018 | 2020 | 2022 |
 |---|---|---|---|---|
-| Bayesian discovery model | **+0.022** [0.005, 0.041] | **+0.054** [0.032, 0.077] | **+0.039** [0.014, 0.064] | **+0.020** [0.006, 0.035] |
+| Bayesian discovery model | **+0.022** [0.000, 0.043] | **+0.054** [0.030, 0.078] | **+0.039** [0.007, 0.069] | **+0.020** [0.003, 0.036] |
 | Effort regression + same covariates | −0.019 | −0.019 | −0.023 | −0.014 |
 | Shen–Chao extrapolation | −4.06 | −5.27 | −4.07 | −4.03 |
 
-The Bayesian model wins at every origin. Adding the same covariates to an ordinary regression makes it
+Intervals are 95% bootstraps over 50 km spatial blocks. The Bayesian model wins at every origin. Adding the same covariates to an ordinary regression makes it
 *worse*. Classical Chao extrapolation fails badly: it cannot forecast unsampled cells and it underpredicts
 how the species pool keeps expanding.
 
@@ -61,13 +61,13 @@ how the species pool keeps expanding.
 
 | Taxon group | Gain | 95% CI |
 |---|---|---|
-| Odonates | +0.132 | [0.075, 0.202] |
-| Birds | +0.053 | [0.026, 0.079] |
-| Butterflies and moths | +0.039 | [0.013, 0.067] |
-| Reptiles | +0.038 | [0.005, 0.080] |
+| Odonates | +0.132 | [0.062, 0.211] |
+| Birds | +0.053 | [0.021, 0.081] |
+| Butterflies and moths | +0.039 | [0.009, 0.071] |
+| Reptiles | +0.038 | [0.008, 0.074] |
 | Amphibians | +0.020 | n.s. |
 | Mammals | +0.011 | n.s. |
-| Plants | **−0.041** | [−0.076, −0.007] |
+| Plants | **−0.041** | [−0.083, 0.000] |
 
 Plants are the exception, plausibly because plant "visits" mix very different recording behaviour.
 
@@ -116,20 +116,28 @@ or the intercepts-only model.
 central Karnataka hills, the southern Kerala and Tamil Nadu ranges, and pockets of the northern Ghats.
 
 ![](figures/E05_survey_priority_map.png)
-![](figures/E05_discovery_full.png)
+![](figures/E05_discovery_full_blockboot.png)
 
 ## What this means for the topic question
-- **Supported, with a twist.** "AI" as habitat prediction does not reveal where unrecorded biodiversity
-  will turn up. A principled Bayesian model of *sampling* does, better than the regression and Chao
-  methods ecologists use, at every time origin tested and for most taxa.
+**Superseded in part by `reports/phase_b_validation.md`.** Against the Kerala Bird Atlas, bias-corrected
+habitat models *do* find species that iNaturalist never recorded: AUC 0.758 vs 0.659 for nearest record.
+The null below came from scoring against later citizen-science records, which are biased truth. The
+validation round also found that the discovery model fails in Europe without observer IDs, and that its
+P₀ ranks missed species no better than visit counts.
+
+- **Supported, with a twist.** Scored against later iNaturalist records, habitat prediction does not reveal
+  where unrecorded biodiversity will turn up. A principled Bayesian model of *sampling* does, better than
+  the regression and Chao methods ecologists use, at every time origin tested and for most taxa.
 - **The useful indicator is a discovery forecast, not a richness map:** the posterior expected new species
   per future visit, conditioned on how much a cell has already been searched.
 - **Two negative results are worth reporting.** A shared Bayesian bias field did not beat target-group
   background on independent survey truth. Observers do not chase known richness.
 
 ## Limitations
-- iNaturalist only; eBird and museum records not included. The Kerala Bird Atlas (independent systematic
-  survey) is blocked behind Dryad's bot check and needs a manual download.
+- iNaturalist only; eBird and museum records not included. Kerala Bird Atlas validation is in
+  `reports/phase_b_validation.md`.
+- The beta-binomial detection likelihood extends Chiu 2022/2023 (*MEE*). Present it as an extension, not
+  as a new estimator.
 - "New species-in-cell" counts first records, not new species to science. A detection can be new to a cell
   because of observer skill or taxonomy changes.
 - Visits are defined as observer-days. iNaturalist does not record survey duration.

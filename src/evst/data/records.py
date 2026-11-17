@@ -39,9 +39,9 @@ def _decimals(x: pd.Series) -> pd.Series:
     return s.str.split(".").str[1].str.len().fillna(0)
 
 
-def load_inat() -> pd.DataFrame:
+def load_inat(path=None) -> pd.DataFrame:
     d = RAW / "inat"
-    obs = pd.read_csv(d / "wg_observations.tsv", sep="	", dtype={"observer_id": "Int64", "taxon_id": "Int64"})
+    obs = pd.read_csv(path or d / "wg_observations.tsv", sep="	", dtype={"observer_id": "Int64", "taxon_id": "Int64"})
     obs = obs[obs.quality_grade == "research"]
     tx = pd.read_csv(d / "taxa.csv.gz", sep="	", usecols=["taxon_id", "ancestry", "rank", "name"])
     name = dict(zip(tx.taxon_id, tx.name))

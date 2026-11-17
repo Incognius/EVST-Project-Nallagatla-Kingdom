@@ -1,0 +1,6 @@
+a,b,kendall_tau
+atlas,drop_pfa_gt_0.1,0.9999999999999999
+atlas,soft_occupancy,0.9999999999999999
+atlas,wet_only,0.9999999999999999
+atlas,dry_only,0.9999999999999999
+wet_only,dry_only,0.9999999999999999

@@ -23,19 +23,19 @@ MAJOR = {"motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary
          "secondary_link", "tertiary", "tertiary_link"}
 
 
-def _warp(src_path, band, tr, shape, resampling=Resampling.bilinear, src_nodata=None):
+def _warp(src_path, band, tr, shape, resampling=Resampling.bilinear, src_nodata=None, crs=CRS):
     out = np.full(shape, np.nan, np.float32)
     with rasterio.open(src_path) as src:
-        reproject(rasterio.band(src, band), out, dst_transform=tr, dst_crs=CRS,
+        reproject(rasterio.band(src, band), out, dst_transform=tr, dst_crs=crs,
                   resampling=resampling, src_nodata=src_nodata if src_nodata is not None else src.nodata,
                   dst_nodata=np.nan)
     return out
 
 
-def worldclim(tr, shape) -> dict[str, np.ndarray]:
-    d = RAW / "worldclim"
-    out = {f"bio{b:02d}": _warp(d / "tile_33_wc2.1_30s_bio.tif", b, tr, shape) for b in range(1, 20)}
-    out["elev"] = _warp(d / "tile_33_wc2.1_30s_elev.tif", 1, tr, shape)
+def worldclim(tr, shape, d=None, tile="tile_33", crs=CRS) -> dict[str, np.ndarray]:
+    d = d or RAW / "worldclim"
+    out = {f"bio{b:02d}": _warp(d / f"{tile}_wc2.1_30s_bio.tif", b, tr, shape, crs=crs) for b in range(1, 20)}
+    out["elev"] = _warp(d / f"{tile}_wc2.1_30s_elev.tif", 1, tr, shape, crs=crs)
     return out
 
 
@@ -44,10 +44,10 @@ def worldpop(tr, shape) -> dict[str, np.ndarray]:
     return {"pop_log": np.log1p(np.clip(dens, 0, None)).astype(np.float32)}
 
 
-def worldcover_fractions(tr, shape, block: int = 100) -> dict[str, np.ndarray]:
+def worldcover_fractions(tr, shape, block: int = 100, tiles=None, crs=CRS) -> dict[str, np.ndarray]:
     cache = PROCESSED.parent / "interim" / "worldcover_frac"
     cache.mkdir(parents=True, exist_ok=True)
-    tiles = sorted((RAW / "worldcover").glob("*_Map.tif"))
+    tiles = tiles or sorted((RAW / "worldcover").glob("*_Map.tif"))
     acc = {k: np.zeros(shape, np.float32) for k in WC_CLASSES}
     wsum = np.zeros(shape, np.float32)
     for t in tiles:
@@ -68,7 +68,7 @@ def worldcover_fractions(tr, shape, block: int = 100) -> dict[str, np.ndarray]:
             with rasterio.open(f, "w", **prof) as dst:
                 dst.write(frac)
         for j, c in enumerate(WC_CLASSES):
-            o = _warp(f, j + 1, tr, shape, src_nodata=-1)
+            o = _warp(f, j + 1, tr, shape, src_nodata=-1, crs=crs)
             ok = ~np.isnan(o)
             acc[c][ok] += o[ok]
             if j == 0:
@@ -77,15 +77,15 @@ def worldcover_fractions(tr, shape, block: int = 100) -> dict[str, np.ndarray]:
             for c, n in WC_CLASSES.items() if c not in (70, 100)}
 
 
-def _osm_layer(name: str) -> gpd.GeoDataFrame:
+def _osm_layer(name: str, zips=None, bounds=None, crs=CRS) -> gpd.GeoDataFrame:
     parts = []
-    bounds = region().to_crs(4326).total_bounds + np.array([-0.3, -0.3, 0.3, 0.3])
-    for z in sorted((RAW / "osm").glob("*-free.shp.zip")):
+    bounds = region().to_crs(4326).total_bounds + np.array([-0.3, -0.3, 0.3, 0.3]) if bounds is None else bounds
+    for z in zips or sorted((RAW / "osm").glob("*-free.shp.zip")):
         with zipfile.ZipFile(z) as zf:
             shp = [n for n in zf.namelist() if n == f"gis_osm_{name}_free_1.shp"]
         if shp:
             parts.append(gpd.read_file(f"zip://{z}!{shp[0]}", bbox=tuple(bounds)))
-    return gpd.pd.concat(parts, ignore_index=True).to_crs(CRS)
+    return gpd.pd.concat(parts, ignore_index=True).to_crs(crs)
 
 
 def _dist_km(geoms, tr, shape, res) -> np.ndarray:
@@ -96,16 +96,16 @@ def _dist_km(geoms, tr, shape, res) -> np.ndarray:
     return (distance_transform_edt(r == 0) * res / 1000).astype(np.float32)
 
 
-def osm(tr, shape) -> dict[str, np.ndarray]:
+def osm(tr, shape, zips=None, bounds=None, crs=CRS, road100=ROAD100) -> dict[str, np.ndarray]:
     res = tr.a
     pad = int(30_000 / res)
     trp = from_origin(tr.c - pad * res, tr.f + pad * res, res, res)
     shp = (shape[0] + 2 * pad, shape[1] + 2 * pad)
     crop = lambda a: a[pad:-pad, pad:-pad]
-    roads = _osm_layer("roads")
-    places = _osm_layer("places")
-    water = _osm_layer("waterways")
-    reserves = _osm_layer("protected_areas_a")
+    roads = _osm_layer("roads", zips, bounds, crs)
+    places = _osm_layer("places", zips, bounds, crs)
+    water = _osm_layer("waterways", zips, bounds, crs)
+    reserves = _osm_layer("protected_areas_a", zips, bounds, crs)
     out = {
         "d_road_all": crop(_dist_km(roads.geometry, trp, shp, res)),
         "d_road_major": crop(_dist_km(roads[roads.fclass.isin(MAJOR)].geometry, trp, shp, res)),
@@ -114,13 +114,15 @@ def osm(tr, shape) -> dict[str, np.ndarray]:
         "d_river": crop(_dist_km(water[water.fclass == "river"].geometry, trp, shp, res)),
         "d_reserve": crop(_dist_km(reserves.geometry, trp, shp, res)),
     }
+    if road100 is None:
+        return out
     tr100 = from_origin(tr.c, tr.f, 100, 100)
     s100 = (shape[0] * 10, shape[1] * 10)
     r = rasterize(((g, 1) for g in roads.geometry), out_shape=s100, transform=tr100, fill=0, dtype="uint8",
                   all_touched=True)
     d100 = (distance_transform_edt(r == 0) * 0.1).astype(np.float32)
-    with rasterio.open(ROAD100, "w", driver="GTiff", height=s100[0], width=s100[1], count=1, dtype="float32",
-                       crs=CRS, transform=tr100, compress="deflate") as dst:
+    with rasterio.open(road100, "w", driver="GTiff", height=s100[0], width=s100[1], count=1, dtype="float32",
+                       crs=crs, transform=tr100, compress="deflate") as dst:
         dst.write(d100, 1)
     return out
 

@@ -27,6 +27,8 @@ out = []
 
 
 def contrast(label, a, b, metric):
+    if ((metric,) + a) not in W.columns or ((metric,) + b) not in W.columns:
+        return
     d = (W[(metric,) + a] - W[(metric,) + b]).dropna()
     out.append({"contrast": label, "metric": metric, "n_species": len(d), "mean_delta": d.mean(),
                 "median_delta": d.median(), "pct_positive": (d > 0).mean(), "wilcoxon_p": wilcoxon(d).pvalue})
@@ -46,6 +48,8 @@ for label, a, b in (("TGB vs random, MLP", ("mlp", "tgb"), ("mlp", "random")),
                     ("TGB vs random, CNN", ("cnn", "tgb"), ("cnn", "random")),
                     ("CNN vs MLP, random bg", ("cnn", "random"), ("mlp", "random")),
                     ("CNN vs MLP, TGB", ("cnn", "tgb"), ("mlp", "tgb"))):
+    if ("auc_pa",) + a not in W.columns or ("auc_pa",) + b not in W.columns:
+        continue
     truth = W[("auc_pa",) + a] - W[("auc_pa",) + b]
     for check in ("auc_cv_vs_land", "auc_cv_vs_tg"):
         cv = W[(check,) + a] - W[(check,) + b]
@@ -62,7 +66,10 @@ if (A.split == "block").any():
     Bk = A[A.split == "block"].groupby(["model", "bg", "species"])[metrics].mean().reset_index()
     print("\n== block split, mean over species\n", Bk.groupby(["model", "bg"])[metrics].mean().round(4).T.to_string())
     Wb = Bk.pivot_table(index="species", columns=["model", "bg"], values=metrics)
-    for label, a, b in (("TGB vs random, MLP", ("mlp", "tgb"), ("mlp", "random")), ("CNN vs MLP, random bg", ("cnn", "random"), ("mlp", "random"))):
+    for label, a, b in (("TGB vs random, MLP", ("mlp", "tgb"), ("mlp", "random")), ("TGB vs random, CNN", ("cnn", "tgb"), ("cnn", "random")),
+                        ("CNN vs MLP, random bg", ("cnn", "random"), ("mlp", "random")), ("CNN vs MLP, TGB", ("cnn", "tgb"), ("mlp", "tgb"))):
+        if any(((m,) + x) not in Wb.columns or ((m,) + x) not in W.columns for m in ("auc_pa", "auc_cv_vs_land") for x in (a, b)):
+            continue
         t = W[("auc_pa",) + a] - W[("auc_pa",) + b]
         cv = Wb[("auc_cv_vs_land",) + a] - Wb[("auc_cv_vs_land",) + b]
         ok = t.notna() & cv.notna()
@@ -71,7 +78,7 @@ if (A.split == "block").any():
                       "agreement": (np.sign(t[ok]) == np.sign(cv[ok])).mean(),
                       "spearman_delta": pd.Series(t[ok]).corr(pd.Series(cv[ok]), method="spearman")})
     G = pd.DataFrame(agree)
-    print(G.tail(2).round(3).to_string(index=False))
+    print(G[G.check == "spatial_block_cv_vs_land"].round(3).to_string(index=False))
 
 brt = D / "E19b_brt.csv"
 if brt.exists():

@@ -38,9 +38,14 @@ ap.add_argument("--patch", type=int, default=15)
 ap.add_argument("--lr", type=float, default=1e-3)
 ap.add_argument("--tag", default="")
 ap.add_argument("--device", default="cuda")
+ap.add_argument("--profile", action="store_true", help="profile 20 training steps and exit")
 a = ap.parse_args()
 dev = a.device
+# bf16 autocast only where the GPU supports it natively (the cluster's GTX 1080 Ti does not: plain fp32 there)
+# (is_bf16_supported() also counts emulation and returns True there, sending convs to a slow im2col path)
+AMP = dev == "cuda" and torch.cuda.get_device_capability()[0] >= 8
 torch.manual_seed(a.seed)
+torch.backends.cudnn.benchmark = True  # fixed input shapes: let cuDNN pick the fastest conv algorithms
 rng = np.random.default_rng(a.seed)
 G = INTERIM / "glc24"
 meta = json.loads((G / "meta.json").read_text())
@@ -158,10 +163,22 @@ def bal_bce(logit, y, mask):
 
 
 net.train()
+if a.profile:
+    from torch.profiler import ProfilerActivity, profile
+    prof = profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA])
 for step in range(a.steps):
+    if a.profile and step == 10:
+        torch.cuda.synchronize()
+        prof.__enter__()
+    if a.profile and step == 30:
+        torch.cuda.synchronize()
+        prof.__exit__(None, None, None)
+        print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=15))
+        print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=10))
+        raise SystemExit
     ci = train_t[torch.randint(0, len(train_t), (a.batch,), device=dev)]
     Y = labels(ci)
-    with torch.autocast(dev, dtype=torch.bfloat16):
+    with torch.autocast(dev, dtype=torch.bfloat16, enabled=AMP):
         if a.bg == "tgb":
             loss = bal_bce(net(cells_t[ci]).float(), Y, torch.ones_like(Y))
         else:
@@ -173,7 +190,7 @@ for step in range(a.steps):
     loss.backward()
     opt.step()
     sched.step()
-    if step % 2000 == 0:
+    if step % 2000 == 0 or step in (50, 200):
         print(f"step {step} loss {loss.item():.4f} {time.time() - t0:.0f}s", flush=True)
 net.eval()
 
@@ -182,7 +199,7 @@ net.eval()
 def predict(cells, chunk=4096):
     out = []
     for i in range(0, len(cells), chunk):
-        with torch.autocast(dev, dtype=torch.bfloat16):
+        with torch.autocast(dev, dtype=torch.bfloat16, enabled=AMP):
             out.append(net(torch.as_tensor(cells[i:i + chunk], device=dev)).float().cpu())
     return torch.cat(out).numpy()
 
@@ -203,16 +220,19 @@ Ppa = predict(pa["cell"])
 res["auc_pa"] = auc_cols(Ypa, Ppa)
 res["n_pa_pres"] = Ypa.sum(0)
 # access excess: top-k predicted PA sites vs the k true presence sites (k = number of presences)
-Az = pa["access"]
-for j, name in enumerate(meta["access_names"] + ["access_index"]):
-    a_j = Az[:, j] if j < Az.shape[1] else Az.mean(1)
-    k = Ypa.sum(0).astype(int)
-    top = np.argsort(-Ppa, axis=0)
-    ex = np.array([a_j[top[:k[s], s]].mean() - a_j[Ypa[:, s] == 1].mean() if k[s] > 0 else np.nan for s in range(S)])
-    res[f"excess_{name}"] = ex
+Az = np.column_stack([pa["access"], pa["access"].mean(1)])
+anames = meta["access_names"] + ["access_index"]
+EX = np.full((S, Az.shape[1]), np.nan)
+for s in range(S):
+    k = int(Ypa[:, s].sum())
+    if k > 0:
+        top = np.argpartition(-Ppa[:, s], k - 1)[:k]
+        EX[s] = Az[top].mean(0) - Az[Ypa[:, s] == 1].mean(0)
+for j, nm in enumerate(anames):
+    res[f"excess_{nm}"] = EX[:, j]
 # internal CV on held-out PO cells: positives = held-out cells with the species;
 # negatives = (i) random land cells (the usual check), (ii) held-out PO cells without it (target-group check)
-neg_land = land[rng.choice(len(land), 20000, replace=False)]
+neg_land = land[rng.choice(len(land), min(20000, len(land)), replace=False)]
 P_te, P_land = predict(cells_all[test_ci]), predict(neg_land)
 Y_te = labels(torch.tensor(test_ci, device=dev)).cpu().numpy()
 n_te = Y_te.sum(0)

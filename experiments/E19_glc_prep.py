@@ -59,9 +59,9 @@ for s in ("phh2o", "soc", "sand"):
     names.append(f"soil_{s}")
 lcp = ER / "LandCover" / "LandCover_MODIS_Terra-Aqua_500m.tif"
 with rasterio.open(lcp) as src:
-    lc = src.read(1)
-    lc_nod = src.nodata
-classes = [int(c) for c in np.unique(lc) if c != lc_nod]
+    lc = src.read(1)  # band 1 = IGBP classes 1-17, 255 = fill (LC_README)
+    lc_nod = 255
+classes = [int(c) for c in np.unique(lc) if 1 <= c <= 17]
 print("land-cover classes", classes, "nodata", lc_nod, flush=True)
 for c in classes:
     m = (lc == c).astype(np.float32)

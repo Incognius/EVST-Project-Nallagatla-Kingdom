@@ -43,7 +43,8 @@ rs = np.random.default_rng(1)
 Ypa = pa["Y"]
 eligible = np.flatnonzero(Ypa.sum(0) >= 10)
 chosen = np.sort(rs.choice(eligible, min(a.n_species, len(eligible)), replace=False))
-bg = {"random": rs.choice(land, a.n_bg, replace=False), "tgb": rs.choice(train_cells, a.n_bg, replace=False)}
+bg = {"random": rs.choice(land, min(a.n_bg, len(land)), replace=False),
+      "tgb": rs.choice(train_cells, min(a.n_bg, len(train_cells)), replace=False)}
 Xbg = {k: feats(v) for k, v in bg.items()}
 Xpa = feats(pa["cell"])
 Az = pa["access"]

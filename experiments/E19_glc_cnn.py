@@ -39,6 +39,7 @@ ap.add_argument("--lr", type=float, default=1e-3)
 ap.add_argument("--tag", default="")
 ap.add_argument("--device", default="cuda")
 ap.add_argument("--profile", action="store_true", help="profile 20 training steps and exit")
+ap.add_argument("--save-pa", action="store_true", help="also save survey-plot predictions (float32) for E23")
 a = ap.parse_args()
 dev = a.device
 # bf16 autocast only where the GPU supports it natively (the cluster's GTX 1080 Ti does not: plain fp32 there)
@@ -217,6 +218,10 @@ def auc_cols(Y, P):
 res = pd.DataFrame({"species": species})
 Ypa = pa["Y"].astype(np.float32)
 Ppa = predict(pa["cell"])
+name = f"E19_{a.model}_{a.bg}_{a.split}_s{a.seed}{a.tag}"
+if a.save_pa:
+    (G / "preds").mkdir(exist_ok=True)
+    np.save(G / "preds" / f"{name}.npy", Ppa.astype(np.float32))
 res["auc_pa"] = auc_cols(Ypa, Ppa)
 res["n_pa_pres"] = Ypa.sum(0)
 # access excess: top-k predicted PA sites vs the k true presence sites (k = number of presences)
@@ -244,9 +249,9 @@ for s in np.flatnonzero(n_te >= 5):
     cv_rand[s] = auc_cols(y[:, None], np.r_[p1, P_land[:, s]][:, None])[0]
 res["auc_cv_vs_land"] = cv_rand
 res["auc_cv_vs_tg"] = np.where(n_te >= 5, auc_cols(Y_te, P_te), np.nan)
-name = f"E19_{a.model}_{a.bg}_{a.split}_s{a.seed}{a.tag}"
-(RESULTS / "E19").mkdir(exist_ok=True)
-res.to_csv(RESULTS / "E19" / f"{name}.csv", index=False)
+out = RESULTS / ("E23" if a.save_pa else "E19")  # prediction re-runs for E23 stay out of E19's summaries
+out.mkdir(exist_ok=True)
+res.to_csv(out / f"{name}.csv", index=False)
 ok = res.n_pa_pres >= 10
 print(f"{name}: PA AUC {res.auc_pa[ok].mean():.4f} | CV vs land {np.nanmean(cv_rand):.4f} | CV vs TG "
       f"{res.auc_cv_vs_tg.mean():.4f} | access excess {res.excess_access_index[ok].mean():+.3f} | {time.time() - t0:.0f}s",

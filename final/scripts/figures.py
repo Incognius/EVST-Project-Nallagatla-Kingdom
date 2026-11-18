@@ -129,7 +129,8 @@ def fig_bias_anatomy():
     x = np.arange(len(a))
     ax[0].bar(x, a.intensity_ratio, color=[ORANGE if v > 1 else BLUE for v in a.intensity_ratio], width=0.7)
     for xi, v in zip(x, a.intensity_ratio):
-        ax[0].text(xi, v + 0.05, f"{v:.2f}x", ha="center", fontsize=6.5, color=INK)
+        ax[0].text(xi, v + 0.05, f"{v:.2f}x", ha="center", va="bottom", fontsize=6.5 if v > 0.5 else 5.8, color=INK,
+                   rotation=0 if v > 0.5 else 90)
     ax[0].axhline(1, color=MUTED, lw=0.7, ls=":")
     ax[0].set_xticks(x, [b.replace("-", "–") for b in a.band_km], fontsize=6.3, rotation=40, ha="right")
     ax[0].set_xlabel("distance to nearest road (km)")
@@ -224,6 +225,80 @@ def fig_cv_inversion():
     title(ax[2], "c", "Taiwan, per species")
     fig.tight_layout()
     save(fig, "F4_cv_inversion")
+
+
+def fig_cv_survey_size():
+    e2 = pd.read_csv(R / "E02_reversal.csv").set_index("regime")
+    k = pd.read_csv(R / "E09b_kba_cv_vs_truth.csv")
+    t = pd.read_csv(R / "E17_cv_vs_truth_taiwan.csv")
+    g = pd.read_csv(FIN / "results" / "glc24" / "summary_cv_agreement.csv")
+    g = g[(g.choice == "TGB vs random, MLP") & (g.check == "auc_cv_vs_land")].iloc[0]
+    rows = [("disdat\n896 fits", e2.loc["random CV", "says_tgb_better_pct"], 62.0),
+            ("Kerala\n196 spp.", 100 * ((k.cv_tgb - k.cv_naive) > 0).mean(), 100 * ((k.kba_tgb - k.kba_naive) > 0).mean()),
+            ("Taiwan\n131 spp.", 100 * ((t.cv_tgb - t.cv_naive) > 0).mean(), 100 * ((t.truth_tgb - t.truth_naive) > 0).mean()),
+            ("Europe\n1,935 spp.", 100 * g.check_prefers_first, 100 * g.truth_prefers_first)]
+    S = pd.read_csv(FIN / "results" / "survey_size_summary.csv")
+    fig, ax = plt.subplots(1, 2, figsize=(7.2, 2.55), gridspec_kw={"width_ratios": [1.15, 1]})
+    x = np.arange(len(rows))
+    ax[0].bar(x - 0.19, [r[1] for r in rows], 0.36, color=ORANGE, label="random CV")
+    ax[0].bar(x + 0.19, [r[2] for r in rows], 0.36, color=BLUE, label="independent survey")
+    for xi, r in zip(x, rows):
+        ax[0].text(xi - 0.19, r[1] + 1.5, f"{r[1]:.1f}", ha="center", fontsize=6.3, color=INK)
+        ax[0].text(xi + 0.19, r[2] + 1.5, f"{r[2]:.1f}", ha="center", fontsize=6.3, color=INK)
+    ax[0].set_xticks(x, [r[0] for r in rows], fontsize=6.6)
+    ax[0].set_ylabel("% where bias correction wins")
+    ax[0].set_ylim(0, 108)
+    ax[0].legend(loc="upper left", ncol=2)
+    title(ax[0], "a", "Random CV rejects the correction")
+    for (sysn, sch), D in S.groupby(["system", "scheme"]):
+        D = D[D.n_sites <= 320]
+        ax[1].plot(D.n_sites, 100 * D.p_pick_corrected, color=BLUE if sysn == "Kerala" else INK,
+                   ls="-" if sch == "random cells" else "--", marker="o" if sysn == "Kerala" else "s", ms=3, lw=1.4,
+                   label=f"{sysn}, {'random' if sch == 'random cells' else 'clustered'} sites")
+    ax[1].axhline(95, color=MUTED, lw=0.6, ls=":")
+    ax[1].text(330, 91, "95%", fontsize=6.3, color=MUTED, ha="right", va="top")
+    ax[1].scatter([5], [0], marker="X", s=40, color=ORANGE, zorder=4, clip_on=False)
+    ax[1].text(7, 4, "random CV on all records: 0%", fontsize=6.5, color=ORANGE, va="bottom")
+    ax[1].set_xscale("log")
+    ax[1].set_xticks([5, 10, 20, 40, 80, 160, 320], ["5", "10", "20", "40", "80", "160", "320"])
+    ax[1].set_ylim(-3, 103)
+    ax[1].set_xlabel("independent survey sites used to judge")
+    ax[1].set_ylabel("% of draws that pick the correction")
+    ax[1].grid(axis="y", color=GRID, lw=0.6)
+    ax[1].legend(loc="center right", fontsize=6.2)
+    title(ax[1], "b", "How many survey sites are enough?")
+    fig.tight_layout()
+    save(fig, "S_cv_size")
+
+
+def fig_glc_cnn():
+    m = pd.read_csv(FIN / "results" / "glc24" / "summary_means.csv").set_index(["model", "bg"])
+    combos = [("mlp", "random", "MLP, random bg", "#F0A25C"), ("cnn", "random", "CNN, random bg", ORANGE),
+              ("mlp", "tgb", "MLP, target-group", "#8FB0D6"), ("cnn", "tgb", "CNN, target-group", BLUE)]
+    fig, ax = plt.subplots(1, 2, figsize=(7.2, 2.6), gridspec_kw={"width_ratios": [0.62, 1.38]})
+    for i, (mo, bg, lb, c) in enumerate(combos):
+        v = m.loc[(mo, bg), "auc_pa"]
+        ax[0].bar(i, v, 0.7, color=c)
+        ax[0].text(i, v + 0.002, f"{v:.3f}", ha="center", fontsize=6.3, color=INK)
+    ax[0].set_xticks(range(4), ["MLP\nrandom", "CNN\nrandom", "MLP\ntarget-\ngroup", "CNN\ntarget-\ngroup"], fontsize=6.3)
+    ax[0].set_ylim(0.70, 0.83)
+    ax[0].set_ylabel("mean survey AUC, 1,967 species")
+    title(ax[0], "a", "Survey skill")
+    layers = [("excess_roads", "roads"), ("excess_railways", "railways"), ("excess_lights", "night\nlights"),
+              ("excess_built", "built-up"), ("excess_popdensity", "population"), ("excess_access_index", "access\nindex")]
+    x = np.arange(len(layers))
+    w = 0.2
+    for i, (mo, bg, lb, c) in enumerate(combos):
+        ax[1].bar(x + (i - 1.5) * w, [m.loc[(mo, bg), l] for l, _ in layers], w, color=c, label=lb)
+    ax[1].set_xticks(x, [n for _, n in layers], fontsize=6.6)
+    ax[1].axhline(0, color=MUTED, lw=0.7)
+    ax[1].set_ylabel("access excess (SD), top-ranked\nplots minus true presences")
+    ax[1].legend(loc="upper left", ncol=2, fontsize=6.3)
+    ax[1].set_ylim(0, 0.78)
+    ax[1].grid(axis="y", color=GRID, lw=0.6)
+    title(ax[1], "b", "How close to people each model puts species")
+    fig.tight_layout()
+    save(fig, "S_glc_cnn")
 
 
 def fig_missing_pairs():
@@ -408,6 +483,7 @@ if __name__ == "__main__":
     which = sys.argv[1:] or ["study", "bias", "virtual", "cv", "missing", "flip", "endemic", "discovery"]
     fns = {"study": fig_study_systems, "bias": fig_bias_anatomy, "virtual": fig_virtual, "cv": fig_cv_inversion,
            "missing": fig_missing_pairs, "flip": fig_flip_occupancy, "endemic": fig_endemic_elevation,
-           "discovery": fig_discovery, "sflip": fig_flip_only, "socc": fig_occ_only}
+           "discovery": fig_discovery, "sflip": fig_flip_only, "socc": fig_occ_only,
+           "cvsize": fig_cv_survey_size, "glc": fig_glc_cnn}
     for w in which:
         fns[w]()

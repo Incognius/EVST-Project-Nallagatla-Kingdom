@@ -2,7 +2,7 @@
 
 *Ponnambalam V · Nandini C · Mohit Nallagatla · Manali Gupta · November 2026*
 
-This document explains the project as it is presented in the final talk (`final/EVST_Topic11_Final.pptx`, 16 slides). It covers:
+This document explains the project as it is presented in the final talk (`final/EVST_Topic11_Final.pptx`, 17 slides). It covers:
 - what the question is;
 - what data we used;
 - what each model and method means, with the basic theory;
@@ -19,7 +19,7 @@ It covers only the parts that worked and made it into the talk.
 
 **Why it is hard.** Almost every record of where a species lives was made by a person who chose to go there. People go near roads, towns and popular parks. So the records describe two things at once: where species live, and where people look. A model trained on these records can learn the second and present it as the first. Worse, the usual way of checking the model can reward it for doing so.
 
-**What we did.** We split the topic into testable claims (Part 3) and tested them on five datasets. Two of them are systematic bird surveys, in Kerala (India) and Taiwan, used as independent ground truth. Models were trained only on iNaturalist citizen-science records and then checked against the surveys.
+**What we did.** We split the topic into testable claims (Part 3) and tested them on six datasets. Two of them are systematic bird surveys, in Kerala (India) and Taiwan, used as independent ground truth. Models were trained only on iNaturalist citizen-science records and then checked against the surveys. A sixth dataset, GeoLifeCLEF 2024 (European plants with 88,987 survey plots), tests whether a bigger model (a CNN) helps.
 
 **What we found.**
 1. The bias is strong. In the Western Ghats, land within 100 m of a road is recorded 3.4 times more than its area predicts; land beyond 2 km, a tenth as much.
@@ -27,10 +27,12 @@ It covers only the parts that worked and made it into the talk.
    - 48% of the time in Kerala, against 27.5% by chance;
    - 40% of the time in Taiwan, against 17% by chance.
 3. The standard checks get this backwards:
-   - Random cross-validation prefers the *uncorrected* model for about 99% of species.
+   - Random cross-validation prefers the *uncorrected* model for about 99% of species, in four systems.
    - On the very same cell–species pairs, later iNaturalist records penalise the correction that the surveys reward.
-4. The result is robust. Modelling missed detections in the survey makes the gains larger. Endemic and mountain species gain most.
-5. A Bayesian model of *how observers sample* forecasts where new records will appear better than standard methods.
+   - A small independent survey fixes this: judging the models on just 20 to 40 randomly placed survey cells picks the right one almost every time.
+4. A bigger model does not see past the bias. On European plants, a CNN that sees a 15 km window is no more accurate than a simple network, and it learns more about where people live.
+5. The result is robust. Modelling missed detections in the survey makes the gains larger. Endemic and mountain species gain most.
+6. A Bayesian model of *how observers sample* forecasts where new records will appear better than standard methods.
 
 **The one-sentence answer.** Yes, AI can find biodiversity that conventional sampling misses, but only if both the model and the test used to judge it account for observer bias.
 
@@ -87,8 +89,8 @@ A **bootstrap** estimates uncertainty by resampling the data many times and reco
 | | Claim | Why it matters | Verdict |
 |---|---|---|---|
 | H1 | Records are biased toward roads and people, measurably | You cannot correct what you have not measured | Supported |
-| H2 | Flexible models absorb more of the bias than a linear model | Decides whether "AI" helps or hurts | Supported (boosted trees leak most) |
-| H3 | Random cross-validation misses the damage and picks the wrong model | If the usual check fails, a good score proves nothing | Supported in 3 real systems |
+| H2 | Flexible models absorb more of the bias than a linear model | Decides whether "AI" helps or hurts | Supported (trees leak most on virtual species; on real European plots the CNN absorbs 40% more than an MLP) |
+| H3 | Random cross-validation misses the damage and picks the wrong model | If the usual check fails, a good score proves nothing | Supported in 4 real systems; 20 to 40 survey sites pick the right model |
 | H4 | Corrections can be ranked where truth is known | We need a defensible correction | Supported: target-group background |
 | H5 | Corrected models find real, unrecorded occurrences | The topic question | Yes, against both surveys |
 | H6 | A Bayesian model of sampling forecasts where new records appear | A second route to "where are the gaps" | Supported, given observer-level effort |
@@ -122,6 +124,9 @@ The gap it reveals is large:
 
 ### T5 Taiwan Breeding Bird Survey (independent truth, replication)
 About eight count points per site, each with a six-minute count, twice per breeding season. We used 2017–2022 and the 420 sites surveyed in at least two of those years. iNaturalist Taiwan bird records were cut from the same export (67,819 usable up to 2022), and names were matched through the GBIF taxonomic backbone; 156 species were analysed.
+
+### T6 GeoLifeCLEF 2024 Europe (independent truth, plants, CNN test)
+5.08 million presence-only plant records across Europe, mostly from apps and portals (Pl@ntNet 45%, Danish EPA 14%, iNaturalist 12%, Norwegian NBIC 12%). The truth is 88,987 standardised presence–absence survey plots that the models never train on. 1,967 species have at least 20 survey presences and 20 records. Inputs are 30 environmental layers on a 1 km grid (climate, soil, land cover). Five "human footprint" layers (roads, railways, night lights, built-up land, population) are never model inputs; they are used only to measure how far a model has drifted toward people. The records carry no observer IDs, so the effort-aware and Bayesian discovery models cannot be tested here. This experiment was run by a teammate on a GPU cluster.
 
 ---
 
@@ -197,6 +202,23 @@ where $B$ is the beta function. The expected number of new species in $m$ more v
 
 The model extends Chiu's (2022) beta-binomial richness estimator to a spatial forecast.
 
+### 5.7 Measuring bias on real data: access excess (Europe)
+With virtual species we measured bias leakage directly, because we knew the true map. On real data we need another way. **Access excess** asks: are the plots a model ranks highest closer to people than the plots where the species actually grows?
+1. For a species found on $k$ survey plots, take the model's top $k$ plots.
+2. Compute the average standardised (z-scored) value of a human-footprint layer over those plots, for example population density.
+3. Subtract the same average over the $k$ plots where the species was really found.
+
+A positive value, in standard-deviation (SD) units, means the model puts the species nearer to people than it really is. Because the footprint layers are never model inputs, any excess must come from the model learning where observers go through the environmental layers.
+
+### 5.8 How many survey sites are enough? (subsampling)
+Random CV uses tens of thousands of citizen-science records and still picks the uncorrected model. To ask how much independent survey data would pick correctly, we kept the two fitted models fixed (boosted trees with and without target-group background) and judged them on only $n$ survey cells:
+1. Draw $n$ cells from the Kerala atlas or the Taiwan survey, either at random or as whole 0.3° spatial blocks (clustered, as a real survey often is).
+2. Compute each species' AUC on the unrecorded pairs in those cells, and average the per-species difference.
+3. Record whether the average favours the corrected model.
+4. Repeat 500 times for each $n$ from 5 to 320.
+
+The share of draws that pick the corrected model is the chance that a survey of that size gives the right answer. The full survey prefers the corrected model, so this is the right answer.
+
 ---
 
 ## Part 6. The experiments in the talk
@@ -213,6 +235,8 @@ The model extends Chiu's (2022) beta-binomial richness estimator to a spatial fo
 | E15 | Does the truth source change the verdict? | Same pairs judged by the atlas and by later iNaturalist | Opposite signs at both cut-offs. Endemics gain twice as much |
 | E16 | Can the atlas absences be trusted? | Occupancy model of atlas lists | A third are doubtful; correcting for them doubles the gains |
 | E17 | Does it all replicate in Taiwan? | The same pipeline on the Taiwan survey | Yes: missing-pair gain, CV inversion and verdict flip all replicate. The elevation effect replicates |
+| E20 | Does a CNN beat a point model on real survey truth, and does it absorb more bias? | GeoLifeCLEF 2024 Europe: point MLP vs 15 km patch CNN, random vs target-group background, 3 seeds, 1,967 species (run as E19 in the teammate's branch) | Same survey AUC (0.767 each; 0.811 with TGB). CNN drifts 40% further toward people. TGB +0.044 AUC for 88% of species. Random CV prefers TGB for 0.7% of species, survey for 88.2% |
+| E21 | How many survey sites does it take to pick the right model? | 500 subsamples of 5 to 320 survey cells in Kerala and Taiwan | 20 random cells pick the correction 96–97% of the time, 40 cells 99.8–100%; clustered cells need 40–80 |
 
 ---
 
@@ -228,14 +252,37 @@ Records cling to roads (a). Recording volume exploded while new knowledge per re
 
 As bias strengthens, uncorrected models get worse against the truth but better under cross-validation. Every flexible model leaks more bias than a GLM. Target-group background is the best correction.
 
-### 7.3 On real data, random CV rejects the correction (E02, E09b, E17)
-![CV inversion](../figures/F4_cv_inversion.png)
+### 7.3 On real data, random CV rejects the correction, and a small survey fixes it (E02, E09b, E17, E20, E21)
+![CV inversion and survey size](../slides/figs/S_cv_size.png)
 
 | | Random CV says the correction helps | Survey says it helps |
 |---|---|---|
 | disdat (896 fits) | 4.5% | 62.0% |
 | Kerala (196 species) | 1.0% | 75.5% |
 | Taiwan (131 species) | 0.8% | 82.4% |
+| Europe, GeoLifeCLEF (1,935 species, MLP) | 0.7% | 88.2% |
+
+In Europe the CNN gives the same picture (0.9% against 89.2%). Spatial-block CV does not fix it: 50 km blocks still back the uncorrected MLP for 97% of species. The one internal check that tracks the truth scores held-out records against held-out target-group sites (62% agreement on disdat, 86% in Europe).
+
+**How much survey is enough (panel b).** Random CV on all the citizen-science records picks the uncorrected model. Judging the same two models on a handful of survey cells:
+
+| Survey cells | Kerala, random | Kerala, clustered | Taiwan, random | Taiwan, clustered |
+|---|---|---|---|---|
+| 5 | 81% | 53% | 78% | 76% |
+| 10 | 92% | 63% | 93% | 90% |
+| 20 | 96% | 81% | 97% | 93% |
+| 40 | 99.8% | 93% | 100% | 99% |
+| 80 | 100% | 99% | 100% | 99.8% |
+
+(% of 500 draws that pick the corrected model.) Twenty randomly placed cells are already right 96–97% of the time, and forty almost always. Clustered surveys need about 40 to 80 cells, because neighbouring cells repeat each other. In Kerala, 40 atlas cells is roughly 320 hours of standardised fieldwork. A small, unbiased survey beats any amount of biased records for choosing a model.
+
+### 7.3b A bigger model sees no further (E20, Europe)
+![CNN on GeoLifeCLEF](../slides/figs/S_glc_cnn.png)
+
+At the mid-evaluation the CNN did worst on virtual species, but those species responded only to point values, so a CNN's spatial context could not help. GeoLifeCLEF is the fair test.
+- **No extra skill.** Point MLP and patch CNN tie on survey AUC: 0.767 each with random background, 0.811 each with target-group background. Both match boosted trees.
+- **More bias.** With random background, the CNN's top-ranked plots are 40% further toward people than the MLP's (access index 0.40 against 0.28 SD; 66% of species). The extra drift comes from towns, built-up land and night lights, not roads: a 15 km window lets the network recognise suburbs, where app users record plants. This is H2 on real data.
+- **The correction fixes both.** Target-group background adds +0.044 AUC for 88% of species and removes 0.20 SD of access excess from the CNN against 0.11 from the MLP. The correction matters about 15 times more than the choice of architecture.
 
 ### 7.4 Corrected models find the missing birds (E09b, E17)
 ![Missing pairs](../figures/F5_core.png)
@@ -289,12 +336,13 @@ It has two limits:
 **New, compared with the literature:**
 1. **The missing-pair protocol:** scoring models only on the pairs citizen science never recorded, against an independent survey.
 2. **A real-data demonstration on identical pairs**, in two systems, that later citizen-science records reverse a survey's verdict on a bias correction. Earlier work argued this mainly from simulation (El-Gabbas & Dormann 2018; Baker et al. 2024).
-3. **The CV inversion with large effect sizes on real survey truth:** 1% vs 75.5% in Kerala, and 0.8% vs 82.4% in Taiwan.
-4. **An occupancy audit of the truth data**, showing the gains were understated.
-5. **A discovery forecast built on observer effort**, extending Chiu's (2022) beta-binomial model to space and time.
+3. **The CV inversion with large effect sizes on real survey truth, in four systems:** 1% vs 75.5% in Kerala, 0.8% vs 82.4% in Taiwan, 0.7% vs 88.2% for European plants. And a practical number: 20 to 40 survey sites are enough to pick the right model.
+4. **A fair real-data test of a CNN:** spatial context adds no skill but more observer bias, through settlement rather than roads.
+5. **An occupancy audit of the truth data**, showing the gains were understated.
+6. **A discovery forecast built on observer effort**, extending Chiu's (2022) beta-binomial model to space and time.
 
 **Limits:**
-- Birds only.
+- The gap-filling truth is birds only; the European test is plants, and has no observer IDs.
 - The Indian truth covers Kerala only.
 - No eBird data.
 - The Taiwan truth unit is a 2 km neighbourhood of survey points.
@@ -308,7 +356,9 @@ It has two limits:
 
 **"Why not just use spatial cross-validation?"** It removes the optimism from nearby records, but the held-out records still come from the same biased observers. On disdat, blocked CV agreed with the truth only 43–44% of the time at every block size.
 
-**"Why didn't deep learning win outright?"** The habitat layers already encode where people go: they predict population with $R^2$ = 0.88. So the decisive step is changing what records are compared against (target-group background, or our effort-aware likelihood), not adding model capacity. Boosted trees with TGB were best or tied-best in both systems.
+**"Why didn't deep learning win outright?"** We tested it directly on 88,987 European survey plots. A CNN that sees a 15 km window ties a simple network on accuracy and learns more about where people live (towns, night lights). Extra capacity mostly buys a better model of the observers. The decisive step is changing what records are compared against (target-group background, or our effort-aware likelihood), which was worth about 15 times more than the architecture. Boosted trees with TGB were best or tied-best in every bird system.
+
+**"If you can't trust CV, how much survey do you need?"** Not much. Judging the models on 20 randomly placed survey cells picks the right one 96–97% of the time, and 40 cells almost always (E21). Clustered surveys need 40 to 80.
 
 **"What does 0.022 AUC mean in practice?"** On its own it is modest. But:
 - it is the difference that random CV gets backwards;
@@ -332,6 +382,8 @@ The most practical number is the hit rate: 48% vs 27.5% in Kerala.
 | Beta distribution | A flexible distribution for probabilities between 0 and 1 |
 | BRT | Boosted regression trees: many small trees, each fixing the last one's errors |
 | Covariate | An input variable such as temperature or tree cover |
+| Access excess | How much nearer to people a model's top-ranked survey plots are than the plots where the species really occurs, in SD units |
+| CNN | Convolutional neural network: looks at a window of map layers like an image, using sliding filters |
 | Cross-validation | Hold out part of the data, train on the rest, score on the held-out part |
 | Detection probability ($p$) | Chance of seeing a species on one visit, given it is there |
 | Endemic | A species found only in one region (Western Ghats, or Taiwan) |

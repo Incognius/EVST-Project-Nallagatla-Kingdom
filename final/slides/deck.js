@@ -108,7 +108,7 @@ s.addText("EVST · TOPIC 11 · FINAL EVALUATION", { x: 0.75, y: 1.2, w: 5.3, h: 
   color: APRICOT, charSpacing: 4, margin: 0, isTextBox: true, objectName: nm("fade", "eyebrow") });
 s.addText("Where the\nroads end", { x: 0.75, y: 1.6, w: 5.3, h: 2.1, fontFace: HEAD, fontSize: 60, color: PAPER,
   margin: 0, valign: "top", isTextBox: true, objectName: nm("up", "title") });
-s.addText("Can AI identify biodiversity patterns missing from conventional sampling? Bias-corrected models tested against independent bird surveys in Kerala and Taiwan.",
+s.addText("Can AI identify biodiversity patterns missing from conventional sampling? Bias-corrected models tested against independent surveys: birds in Kerala and Taiwan, plants across Europe.",
   { x: 0.75, y: 3.8, w: 5.1, h: 1.4, fontFace: BODY, fontSize: 17, color: SAGE, margin: 0, valign: "top",
     isTextBox: true, objectName: nm("fade", "subtitle") });
 s.addText([{ text: "Ponnambalam V · Nandini C · Mohit Nallagatla · Manali Gupta", options: { breakLine: true } },
@@ -132,8 +132,8 @@ s.addText([
   { x: 1.0, y: 1.8, w: 4.15, h: 4.8, margin: 0, valign: "top", isTextBox: true, objectName: nm("fade", "qtext") });
 table(s, 5.75, 1.6, 7.05, [0.55, 4.6, 1.9], ["", "Hypothesis", "Experiments"], [
   [{ text: "H1", color: ORANGE, bold: true }, "Records are biased toward roads, and the bias is measurable", "E01"],
-  [{ text: "H2", color: ORANGE, bold: true }, "Flexible models absorb more bias than a linear model", "E03"],
-  [{ text: "H3", color: ORANGE, bold: true }, "Random cross-validation misses the damage and picks the wrong model", "E02, E03, E09b, E17"],
+  [{ text: "H2", color: ORANGE, bold: true }, "Flexible models absorb more bias than a linear model", "E03, E20"],
+  [{ text: "H3", color: ORANGE, bold: true }, "Random cross-validation misses the damage and picks the wrong model", "E02, E03, E09b, E17, E20, E21"],
   [{ text: "H4", color: ORANGE, bold: true }, "Corrections can be ranked where the truth is known", "E02, E03"],
   [{ text: "H5", color: FOREST, bold: true }, { text: "Corrected models find real, unrecorded occurrences (the topic question)", bold: true }, "E04, E09b, E17"],
   [{ text: "H6", color: STONE, bold: true }, "A Bayesian model of sampling forecasts where new records appear", "E05"],
@@ -151,33 +151,34 @@ heading(s, "LITERATURE", "What was known, what was missing, what we added");
 table(s, 0.75, 1.55, 11.85, [2.05, 5.0, 4.8], ["Theme", "What the literature established", "What we added"], [
   [{ text: "Bias exists", bold: true }, "Records cluster near roads and towns (Hughes 2021, Meyer 2015); volume outpaces new knowledge (Oliver 2021)", "Measured in the Western Ghats with the land-area null that the road statistic lacks; per-taxon sampbias weights checked against the R package"],
   [{ text: "Corrections", bold: true }, "Target-group background (Phillips 2009); pooling with surveys (Fithian 2015); comparisons mostly on virtual species (Inman 2021)", "Ranked corrections on real survey truth in two tropical/subtropical bird systems"],
-  [{ text: "AI models", bold: true }, "Flexible models win benchmarks (Elith 2006, Valavi 2022); CNNs (Deneu 2021), SINR (Cole 2023), DeepMaxent (2025)", "Tested SINR- and DeepMaxent-style losses against tropical survey truth; proposed an effort-aware likelihood"],
-  [{ text: "Validation", bold: true }, "Spatial blocking removes autocorrelation optimism (Ploton 2020, Valavi 2019); internal checks cannot judge corrections, shown mostly in simulation (El-Gabbas 2018, Baker 2024)", "Real-data demonstration on identical cell-species pairs, in two systems: later citizen-science records reverse the survey's verdict"],
+  [{ text: "AI models", bold: true }, "Flexible models win benchmarks (Elith 2006, Valavi 2022); CNNs (Deneu 2021), SINR (Cole 2023), DeepMaxent (2025)", "Tested SINR- and DeepMaxent-style losses against tropical survey truth; proposed an effort-aware likelihood; a patch CNN against 88,987 European survey plots"],
+  [{ text: "Validation", bold: true }, "Spatial blocking removes autocorrelation optimism (Ploton 2020, Valavi 2019); internal checks cannot judge corrections, shown mostly in simulation (El-Gabbas 2018, Baker 2024)", "Real-data demonstration in four systems; later citizen-science records reverse the survey's verdict on identical pairs; 20-40 survey sites pick the right model"],
   [{ text: "Detection", bold: true }, "Occupancy models (MacKenzie 2002); beta-binomial richness (Chiu 2022)", "Occupancy audit of the survey truth itself; spatial beta-binomial forecast of new records"],
 ], { size: 12, rowH: 0.85 });
 s.addNotes("SPEAKER 1 (1.5 min). Our literature review was organised by theme. Each row says what was already established and what we added. The key gap: almost everything about whether bias corrections work, and whether internal checks can tell, comes from simulations with virtual species, because real data rarely include an unbiased test set. Baker and colleagues in 2024 and El-Gabbas and Dormann in 2018 argued that internal evaluation cannot judge a correction, but showed it mainly in simulation. We bring two independent systematic bird surveys, which lets us test these claims on real data.");
 
 pres.addSection({ title: "Data and methods" });
 s = newSlide("PAPER", "Data and methods");
-heading(s, "DATA", "Five test beds, five ways to know the truth");
+heading(s, "DATA", "Six test beds, six ways to know the truth");
 fig(s, "F1_study_systems.png", 0.7, 1.5, { h: 5.25 });
-table(s, 8.35, 1.5, 4.5, [1.35, 1.6, 1.55], ["Test bed", "Training data", "Truth"], [
+table(s, 8.35, 1.45, 4.5, [1.35, 1.6, 1.55], ["Test bed", "Training data", "Truth"], [
   [{ text: "T1 Virtual species", bold: true }, "30 species, real Ghats layers, real road bias at 3 strengths", "known by construction"],
   [{ text: "T2 disdat", bold: true }, "226 species, 6 regions, 52,605 records", "53,044 survey sites"],
   [{ text: "T3 Western Ghats", bold: true }, "493,227 iNaturalist records, 10,219 species", "records after the training year"],
   [{ text: "T4 Kerala Bird Atlas", bold: true }, "iNaturalist birds to 2020", "844 cells, timed 15-min lists, 2015-20"],
   [{ text: "T5 Taiwan BBS", bold: true }, "67,819 iNaturalist bird records to 2022", "420 sites, ~77 point counts each"],
-], { size: 10, rowH: 0.62 });
-tag(s, 8.6, 5.45, 4.15, 1.3, "FIELD NOTE · WHY TWO SURVEYS", [["", "Phases B-D: the atlas gives Indian ground truth; Taiwan is the replication. The US survey was behind a bot check, eBird access was not available."]], -1);
-s.addNotes("SPEAKER 1 (1.5 min). Every claim needs a source of truth. T1, virtual species: we invent them on real Western Ghats layers, so the truth is exact. T2, disdat: the benchmark behind Elith 2006 and Phillips 2009, with independent absence surveys at 53,000 sites. T3, the Western Ghats itself: half a million iNaturalist records of ten thousand species. The maps are the real data. Panel b is the Kerala Bird Atlas: 844 cells of 6.6 km, each surveyed with up to 32 timed checklists by trained volunteers. Colour is the share of atlas species iNaturalist never recorded in that cell: nearly everything is dark, and the white dots are the 435 cells with no iNaturalist bird visit at all. Panel c is Taiwan, our replication: iNaturalist records in orange, 420 Breeding Bird Survey sites in blue.");
+  [{ text: "T6 GeoLifeCLEF 2024 Europe", bold: true }, "5.08 M plant records, 1,967 species, no observer IDs", "88,987 survey plots, never trained on"],
+], { size: 9.5, rowH: 0.56 });
+tag(s, 8.6, 5.8, 4.15, 0.95, "FIELD NOTE · WHY THREE SURVEYS", [["", "Kerala gives Indian truth, Taiwan replicates it, Europe tests a CNN on plants. eBird and the US survey were not accessible."]], -1);
+s.addNotes("SPEAKER 1 (1.5 min). Every claim needs a source of truth. T1, virtual species: we invent them on real Western Ghats layers, so the truth is exact. T2, disdat: the benchmark behind Elith 2006 and Phillips 2009, with independent absence surveys at 53,000 sites. T3, the Western Ghats itself: half a million iNaturalist records of ten thousand species. The maps are the real data. Panel b is the Kerala Bird Atlas: 844 cells of 6.6 km, each surveyed with up to 32 timed checklists by trained volunteers. Colour is the share of atlas species iNaturalist never recorded in that cell: nearly everything is dark, and the white dots are the 435 cells with no iNaturalist bird visit at all. Panel c is Taiwan, our replication: iNaturalist records in orange, 420 Breeding Bird Survey sites in blue. T6 is new since the mid-evaluation: GeoLifeCLEF 2024, five million European plant records from apps and portals, with 88,987 standardised survey plots that the models never see. It has no observer IDs, so it tests architectures and corrections, not our effort models.");
 
 s = newSlide("PAPER", "Data and methods");
 heading(s, "INTEGRATION", "How the components fit together");
 const cols = [
-  ["SOURCES", ["iNaturalist open data (India, Taiwan)", "WorldClim 2.1: 19 climate layers + elevation", "ESA WorldCover 10 m: 9 land-cover fractions", "WorldPop 2020 · OpenStreetMap roads, towns, reserves", "Surveys: Kerala Bird Atlas · Taiwan BBS · disdat"]],
+  ["SOURCES", ["iNaturalist open data (India, Taiwan)", "WorldClim 2.1: 19 climate layers + elevation", "ESA WorldCover 10 m: 9 land-cover fractions", "WorldPop 2020 · OpenStreetMap roads, towns, reserves", "Surveys: Kerala Bird Atlas · Taiwan BBS · disdat · GeoLifeCLEF 2024 Europe"]],
   ["PROCESSING", ["Cleaning: species rank, \u2264 5 km uncertainty, hotspot and centroid filters", "1 km grid: 29 habitat + 5 access layers per cell", "Visits = observer \u00d7 day", "Names joined to atlas table / GBIF backbone", "Survey cells linked to 1 km pixels"]],
   ["MODELS", ["GLM, MaxEnt, boosted trees, random forest", "MLP, patch CNN, multi-species neural losses (GPU)", "Effort-aware occupancy likelihood", "Bayesian discovery model (beta-binomial)", "Occupancy model of the surveys (checks the truth)"]],
-  ["EVALUATION", ["Random and spatial-block CV", "Later citizen-science records", "Missing-pair protocol vs survey", "Same-pair truth-source test", "Spatial-block bootstrap, Wilcoxon, pre-registered predictions"]],
+  ["EVALUATION", ["Random and spatial-block CV", "Later citizen-science records", "Missing-pair protocol vs survey", "Same-pair truth-source test", "Survey-size subsampling", "Spatial-block bootstrap, Wilcoxon tests"]],
 ];
 cols.forEach(([title, items], i) => {
   const x = 0.75 + i * 3.08, w = 2.78;
@@ -185,7 +186,7 @@ cols.forEach(([title, items], i) => {
   s.addText(title, { x: x + 0.15, y: 1.75, w: w - 0.3, h: 0.35, fontFace: LABEL, fontSize: 11, bold: true, color: i === 3 ? BLUE : ORANGE,
     charSpacing: 3, margin: 0, isTextBox: true, objectName: nm("left", "pipetitle") });
   s.addText(items.map((t, j) => ({ text: t, options: { bullet: { code: "25AA", indent: 12 }, breakLine: j < items.length - 1, paraSpaceAfter: 6 } })),
-    { x: x + 0.15, y: 2.15, w: w - 0.3, h: 3.1, fontFace: BODY, fontSize: 11.5, color: INK, margin: 0, valign: "top",
+    { x: x + 0.15, y: 2.15, w: w - 0.3, h: 3.1, fontFace: BODY, fontSize: 11, color: INK, margin: 0, valign: "top",
       isTextBox: true, objectName: nm("left", "pipeitems") });
   if (i < 3) s.addShape(pres.ShapeType.rightArrow, { x: x + w + 0.02, y: 3.3, w: 0.28, h: 0.4, fill: { color: ORANGE },
     line: { type: "none" }, objectName: nm("fade", "arrow") });
@@ -201,7 +202,7 @@ s.addText([B("Habitat vs access. "), T("Each cell carries what species respond t
   B("One codebase, two systems: "), T("a system switch builds identical inputs for Kerala and Taiwan, so every experiment runs unchanged on both.")],
   { x: 5.3, y: 5.6, w: 7.5, h: 1.3, fontFace: BODY, fontSize: 13, color: INK, margin: 0, valign: "top", isTextBox: true,
     objectName: nm("fade", "pipenote") });
-s.addNotes("SPEAKER 1 (1.5 min). This is the system we built, in Python with one R cross-check. Sources on the left: iNaturalist for records, WorldClim, ESA WorldCover, WorldPop and OpenStreetMap for covariates, and the three survey datasets for truth. Processing puts everything on a 1 km grid with 29 habitat layers and 5 access layers per cell, defines a visit as one observer on one day, and harmonises species names. Models range from a GLM to boosted trees to neural networks trained for all species at once on the GPU, plus the Bayesian and occupancy models. Evaluation is the core: we judge the same models with four different tests. A single switch builds identical inputs for Kerala and Taiwan, so the replication used exactly the same code.");
+s.addNotes("SPEAKER 1 (1.5 min). This is the system we built, in Python with one R cross-check. Sources on the left: iNaturalist for records, WorldClim, ESA WorldCover, WorldPop and OpenStreetMap for covariates, and four survey datasets for truth, including the European plant plots. Processing puts everything on a 1 km grid with 29 habitat layers and 5 access layers per cell, defines a visit as one observer on one day, and harmonises species names. Models range from a GLM to boosted trees to neural networks trained for all species at once on the GPU, plus the Bayesian and occupancy models. Evaluation is the core: we judge the same models with several different tests, and we also ask how much survey data a fair test needs. A single switch builds identical inputs for Kerala and Taiwan, so the replication used exactly the same code.");
 
 s = newSlide("PAPER", "Data and methods");
 heading(s, "H1 · EXPLORATORY ANALYSIS", "The records follow the roads, and more records add less");
@@ -218,7 +219,7 @@ table(s, 9.45, 1.55, 3.4, [1.45, 0.65, 0.65, 0.65], ["sampbias decay /km", "road
 ], { size: 10.5, rowH: 0.36 });
 s.addText("Bias is taxon-specific: amphibian records follow major roads, mammal records follow protected areas (PA). All six weights fall inside the R package's 95% intervals.",
   { x: 9.45, y: 4.35, w: 3.4, h: 1.2, fontFace: BODY, fontSize: 11.5, color: INK, margin: 0, valign: "top", isTextBox: true, objectName: nm("fade", "sbnote") });
-tag(s, 9.7, 5.75, 3.05, 1.0, "FIELD NOTE", [["DATA", "493,227 records · OSM roads at 100 m"]]);
+tag(s, 9.7, 5.85, 3.05, 0.75, "FIELD NOTE", [["DATA", "493,227 records · OSM roads"]]);
 s.addNotes("SPEAKER 2 (1.5 min). Exploratory analysis of the training data, which is H1. The often-quoted statistic, records within 2.5 km of a road, is uninformative here because 95% of the Western Ghats is within 2.5 km of a road. So we divided the share of records by the share of land in each band: land within 100 m of a road is recorded 3.4 times more than its area predicts, land beyond 2 km at a tenth. Recording volume grew 61-fold since 2008, but each record adds less new knowledge, a 56% drop. The table on the right is our Python port of the sampbias model, a per-kilometre decay of record density with distance. It shows bias differs by taxon: amphibian records follow major roads, mammal records follow protected areas. We validated the port against the original R package's MCMC.");
 
 s = newSlide("PAPER", "Data and methods");
@@ -228,7 +229,7 @@ s.addText([
   { text: "PRESENCE-ONLY MODELS", options: { fontFace: LABEL, fontSize: 10.5, bold: true, color: ORANGE, charSpacing: 3, breakLine: true, paraSpaceAfter: 4 } },
   { text: "A model contrasts pixels where a species was recorded (1) with background pixels (0). Capacity ladder: GLM \u2192 MaxEnt \u2192 boosted trees \u2192 random forest \u2192 MLP \u2192 patch CNN.", options: { breakLine: true, paraSpaceAfter: 10 } },
   { text: "THE CORRECTION", options: { fontFace: LABEL, fontSize: 10.5, bold: true, color: ORANGE, charSpacing: 3, breakLine: true, paraSpaceAfter: 4 } },
-  { text: "Random background ", options: { bold: true } }, { text: "compares roadside records with random land, so \u201cnear a road\u201d looks like habitat. ", options: {} },
+  { text: "Random background ", options: { bold: true, paraSpaceAfter: 10 } }, { text: "compares roadside records with random land, so \u201cnear a road\u201d looks like habitat. ", options: {} },
   { text: "Target-group background ", options: { bold: true, color: BLUE } }, { text: "draws the background from where anyone recorded a related species, so both sides share the observer bias.", options: { breakLine: true, paraSpaceAfter: 10 } },
   { text: "EFFORT-AWARE LIKELIHOOD (OURS)", options: { fontFace: LABEL, fontSize: 10.5, bold: true, color: ORANGE, charSpacing: 3, breakLine: true, paraSpaceAfter: 4 } },
   { text: "P(recorded) = \u03c8 \u00d7 [1 \u2212 (1 \u2212 p)^U]", options: { fontFace: "Cambria Math", fontSize: 15, color: FOREST, breakLine: true, paraSpaceAfter: 3 } },
@@ -263,24 +264,42 @@ heading(s, "H2-H4 · KNOWN TRUTH", "With known truth: more bias, worse maps, bet
 fig(s, "F3_virtual_species.png", 0.7, 1.5, { w: 11.9 });
 bullets(s, 0.85, 5.35, 11.6, 1.6, [
   [B("a  "), T("As observer bias grows, true AUC falls (0.79 \u2192 0.71) while random-CV AUC rises (0.74 \u2192 0.92): a better CV score means more bias absorbed.")],
-  [B("b  "), T("Every flexible model leaks more bias into its map than the GLM (p \u2264 0.003). Boosted trees leak most, not the CNN, so the problem is flexibility, not depth.")],
+  [B("b  "), T("Every flexible model leaks more bias into its map than the GLM (p \u2264 0.003). Boosted trees leak most here; on real European plots the CNN does absorb more (slide 10).")],
   [B("c  "), T("Target-group background is the truly best correction for 77-90% of species; thinning barely helps. Random CV instead picks bias-covariate conditioning for 83-97%, the method that models the bias rather than removing it.")],
 ], 13);
 s.addNotes("SPEAKER 2 (1.5 min). Virtual species are the controlled experiment. We invented 30 species on the real Western Ghats layers and recorded them through the real road bias at three strengths. Panel a is the key pattern: as bias increases, the true accuracy of uncorrected models falls but their cross-validation accuracy rises, because the held-out records share the bias. Panel b: bias leakage, the share of the predicted map explained by access layers beyond true suitability. All flexible models leak more than a GLM, and boosted trees leak most. Panel c: among corrections, target-group background is best against the truth. Random CV picks a different correction, bias-covariate conditioning, because that model uses accessibility directly and the biased test records reward it. So H2, H3 and H4 hold with known truth.");
 
 s = newSlide("PAPER", "Results");
-heading(s, "H3 · THREE REAL SYSTEMS", "On real data, random cross-validation rejects the correction");
-fig(s, "F4_cv_inversion.png", 0.7, 1.5, { w: 11.2 });
-table(s, 0.75, 5.7, 7.4, [2.8, 1.5, 1.55, 1.55], ["System", "Random CV prefers fix", "Survey prefers fix", "CV optimism, naive"], [
-  ["disdat, 896 species-model fits", "4.5%", "62.0%", "+0.02 to +0.33"],
-  ["Kerala, 196 species", "1.0%", "75.5%", "+0.109"],
-  ["Taiwan, 131 species", "0.8%", "82.4%", "+0.073"],
-], { size: 11, rowH: 0.3 });
-bullets(s, 8.5, 5.65, 4.3, 1.4, [
-  [B("Blocking does not fix it. "), T("Bigger spatial blocks shrink the optimism (+0.076 \u2192 +0.018) but agreement with truth stays at 43-44%.")],
-  [B("One internal check works: "), T("test against held-out target-group sites (62% agreement).")],
+heading(s, "H3 · FOUR REAL SYSTEMS", "Random CV picks wrong; 20 to 40 survey sites pick right");
+fig(s, "S_cv_size.png", 1.2, 1.5, { w: 10.7 });
+bullets(s, 0.85, 5.62, 5.9, 1.4, [
+  [B("Four systems, one pattern. "), T("Random CV favours the correction for 0.7-4.5% of species; independent surveys for 62-88%. Europe (plants, 1,935 species): 0.7% vs 88.2%.")],
+  [B("Blocking does not fix it. "), T("Agreement with truth stays at 43-44% on disdat; in Europe 50 km blocks still back the uncorrected MLP for 97% of species.")],
+], 11.5);
+bullets(s, 7.0, 5.62, 5.8, 1.4, [
+  [B("How many sites? "), T("Judge the same two models on n survey cells, 500 draws: 20 random cells pick the correction 96-97% of the time, 40 cells 99.8-100%. Clustered sites need 40-80.")],
+  [B("One internal check works: "), T("held-out target-group sites (62% agreement on disdat, 86% in Europe).")],
+], 11.5);
+s.addNotes("SPEAKER 2 (1.5 min). Now real data with independent truth, in four systems. Panel a: in disdat, the surveys say the correction helps in 62% of fits and random CV in 4.5%. Kerala is 1% against 75.5%, Taiwan 0.8% against 82.4%, and the new European plant system 0.7% against 88.2% over almost two thousand species. Random CV, run on tens of thousands of citizen-science records, picks the uncorrected model essentially every time. Spatial blocking does not change which model gets picked, because the held-out records still carry the observer bias. Panel b asks the practical question: if random CV on all those records gets it wrong, how much independent survey do you need to get it right? We took the same two fitted models and judged them on a random subset of n survey cells, 500 times for each n. With 20 randomly placed cells the survey picks the corrected model 96 to 97% of the time, and with 40 cells essentially always. If the cells come in spatial clusters you need about 40 to 80. In Kerala 40 atlas cells is about 320 hours of standardised fieldwork. So a small, unbiased survey beats any amount of biased records for choosing a model.");
+
+s = newSlide("PAPER", "Results");
+heading(s, "H2 ON REAL DATA · EUROPE", "A CNN sees no further, but it learns the observers better");
+fig(s, "S_glc_cnn.png", 0.7, 1.5, { w: 8.4 });
+card(s, 9.4, 1.55, 3.4, 4.75, "glccard");
+s.addText([
+  { text: "THE TEST", options: { fontFace: LABEL, fontSize: 10.5, bold: true, color: ORANGE, charSpacing: 3, breakLine: true, paraSpaceAfter: 4 } },
+  { text: "GeoLifeCLEF 2024: 5.08 M plant records from apps and portals, 1,967 species, scored on 88,987 survey plots. A point MLP sees one 1 km pixel; a patch CNN sees a 15 × 15 km window. Each trained with random and target-group background, 3 seeds.", options: { breakLine: true, paraSpaceAfter: 8 } },
+  { text: "ACCESS EXCESS", options: { fontFace: LABEL, fontSize: 10.5, bold: true, color: ORANGE, charSpacing: 3, breakLine: true, paraSpaceAfter: 4 } },
+  { text: "How much nearer to people a model’s top-ranked plots are than the plots where the species really grows, in SD units. Access layers are never model inputs.", options: { breakLine: true, paraSpaceAfter: 8 } },
+  { text: "VERDICT", options: { fontFace: LABEL, fontSize: 10.5, bold: true, color: ORANGE, charSpacing: 3, breakLine: true, paraSpaceAfter: 4 } },
+  { text: "The correction is worth about 15 times the architecture.", options: {} }],
+  { x: 9.6, y: 1.7, w: 3.05, h: 5.0, fontFace: BODY, fontSize: 11.5, color: INK, margin: 0, valign: "top", isTextBox: true, objectName: nm("fade", "glctext") });
+bullets(s, 0.85, 4.95, 8.3, 2.0, [
+  [B("No extra skill: "), T("CNN and MLP tie on survey AUC (0.767 each; 0.811 each with target-group background) and match boosted trees.")],
+  [B("More bias: "), T("with random background the CNN puts species 40% further toward people (+0.11 SD, 66% of species), via towns, built-up land and night lights, not roads.")],
+  [B("The correction fixes both: "), T("+0.044 AUC for 88% of species, and it removes almost twice as much bias from the CNN as from the MLP.")],
 ], 12);
-s.addNotes("SPEAKER 2 (1.5 min). Now real data with independent truth, in three systems. Panel a: in disdat, the surveys say the correction helps in 62% of fits; random CV says so in 4.5%. In Kerala it is 1% versus 75.5%, and in Taiwan 0.8% versus 82.4%. Panels b and c show every species: nearly all fall left of zero on the x axis, so CV says the correction hurts, while most are above zero, so the survey says it helps. Random CV overstates the uncorrected model by about 0.1 AUC but is nearly unbiased for the corrected one. Spatial blocking, the standard remedy, shrinks the optimism but does not change which model gets picked, because the held-out records still carry the observer bias. The only internal check that tracked the truth scored held-out records against held-out target-group sites.");
+s.addNotes("SPEAKER 2 (1.5 min). At the mid-evaluation the CNN did worst on virtual species, and we said that test was unfair to it, because those species only responded to point values. This is the fair test, on real survey truth. GeoLifeCLEF 2024 has five million European plant records from apps and portals, and almost ninety thousand standardised survey plots the models never see. We trained one network for all 1,967 species, either looking at a single 1 km pixel or at a 15 km window around it, each with random or target-group background. Panel a: spatial context adds nothing; the two architectures tie to the third decimal, and both match boosted trees. Panel b is the bias. We ask how much closer to people a model's top plots are than the plots where the species actually grows. Every model is pulled toward people, and the CNN with random background most of all, 40% more than the MLP, through towns, built-up land and night lights. A 15 km window lets it recognise suburbs, which is where app users record plants, and it learns that as habitat. That is H2 on real data. Target-group background raises survey AUC by 0.044 for 88% of species and removes most of the extra bias. The correction matters about fifteen times more than the architecture.");
 
 s = newSlide("PAPER", "Results");
 heading(s, "H5 · THE TOPIC QUESTION", "Corrected models find the birds citizen science missed");
@@ -375,8 +394,8 @@ heading(s, "WHERE WE STAND", "What held up");
 const V = (t, c) => ({ text: t, font: HEAD, size: 14, color: c });
 table(s, 0.75, 1.5, 11.9, [0.85, 5.1, 2.25, 3.7], ["", "Hypothesis", "Verdict", "Key evidence"], [
   [{ text: "H1", bold: true, color: ORANGE }, "Records are measurably biased", V("Supported", FOREST), "3.4\u00d7 roadside intensity; sampbias matches R"],
-  [{ text: "H2", bold: true, color: ORANGE }, "Flexible models absorb more bias", V("Supported", FOREST), "all flexible > GLM; trees leak most"],
-  [{ text: "H3", bold: true, color: ORANGE }, "Random CV picks the wrong model", V("Supported, 3 systems", FOREST), "1% / 0.8% vs 75.5% / 82.4%"],
+  [{ text: "H2", bold: true, color: ORANGE }, "Flexible models absorb more bias", V("Supported", FOREST), "all flexible > GLM; real CNN +40% access excess"],
+  [{ text: "H3", bold: true, color: ORANGE }, "Random CV picks the wrong model", V("Supported, 4 systems", FOREST), "CV 0.7-4.5% vs survey 62-88%; 20-40 sites fix it"],
   [{ text: "H4", bold: true, color: ORANGE }, "Corrections can be ranked", V("Supported", FOREST), "target-group background best"],
   [{ text: "H5", bold: true, color: ORANGE }, { text: "Corrected models find unrecorded occurrences", bold: true }, V("Yes, vs surveys", FOREST), "AUC 0.758 / 0.820; hit rate \u00d71.8 / \u00d72.4"],
   [{ text: "H6", bold: true, color: STONE }, "Bayesian sampling model forecasts discovery", V("Supported*", FOREST), "* only with observer-level effort"],
@@ -385,7 +404,7 @@ table(s, 0.75, 1.5, 11.9, [0.85, 5.1, 2.25, 3.7], ["", "Hypothesis", "Verdict", 
   [{ text: "S0", bold: true, color: STONE }, "Survey truth survives missed detections", V("Supported", FOREST), "gains double once doubtful absences go"],
 ], { size: 12.5, rowH: 0.5 });
 leafBR(s, 3.0, 0.4, 0.4);
-s.addNotes("SPEAKER 4 (1.5 min). The scorecard. H1 to H4, whether the method can be trusted, all hold, and H3 now holds on real data in three systems. H5, the topic question, is supported against both surveys. Of the later hypotheses, the Bayesian model works when effort is measured per observer, and the truth-source result replicates. Endemic and montane species gain most in both systems, although the exposure explanation holds only in Kerala. And the survey truth survives an explicit model of missed detections, which makes the gains larger.");
+s.addNotes("SPEAKER 4 (1.5 min). The scorecard. H1 to H4, whether the method can be trusted, all hold, H2 now holds on real data for the CNN in Europe, and H3 holds in four systems, with 20 to 40 survey sites enough to get the choice right. H5, the topic question, is supported against both surveys. Of the later hypotheses, the Bayesian model works when effort is measured per observer, and the truth-source result replicates. Endemic and montane species gain most in both systems, although the exposure explanation holds only in Kerala. And the survey truth survives an explicit model of missed detections, which makes the gains larger.");
 
 s = newSlide("FOREST", "Close");
 s.addImage({ path: A("canopy.png"), x: 8.6, y: -0.75, w: 9.0 * AR("canopy.png"), h: 9.0, objectName: nm("zoom", "canopy") });
@@ -394,17 +413,17 @@ s.addText("CONCLUSIONS", { x: 0.75, y: 0.55, w: 5, h: 0.3, fontFace: LABEL, font
 s.addText("Yes, if both the model and the test account for bias", { x: 0.75, y: 0.9, w: 7.6, h: 1.2, fontFace: HEAD, fontSize: 34,
   color: PAPER, margin: 0, valign: "top", isTextBox: true, objectName: nm("up", "title") });
 const concl = [
-  ["The answer", "Bias-corrected models find species citizen science never recorded, in two independent survey systems, with endemic and montane species gaining most."],
-  ["What we add to the literature", "A missing-pair protocol; real-data proof, in two systems, that random CV and later citizen-science records reward observer bias; an occupancy audit of the truth; a discovery forecast built on observer effort."],
+  ["The answer", "Bias-corrected models find species citizen science never recorded, in two independent bird surveys, with endemic and montane species gaining most. A bigger model does not help: a CNN only learns the observers better."],
+  ["What we add to the literature", "A missing-pair protocol; real-data proof, in four systems, that random CV and later records reward observer bias, and that 20-40 survey sites suffice to correct the choice; an occupancy audit of the truth; a discovery forecast."],
   ["Practical advice", "Use target-group background; never validate a correction with random CV or later records; get independent surveys, and model missed detections before trusting their absences."],
-  ["Limits", "Birds only; Indian truth covers Kerala only; no eBird access; the Taiwan truth unit is a 2 km neighbourhood; one closely related study not yet read in full."],
+  ["Limits", "Gap-filling truth is birds only (plants only for the CNN test); Indian truth covers Kerala only; no eBird access; Europe has no observer IDs."],
 ];
 s.addText(concl.flatMap(([k, v], i) => [{ text: k, options: { fontFace: LABEL, fontSize: 12, bold: true, color: APRICOT, charSpacing: 2, breakLine: true } },
   { text: v, options: { fontFace: BODY, fontSize: 14, color: PAPER, breakLine: i < concl.length - 1, paraSpaceAfter: 11 } }]),
   { x: 0.75, y: 2.2, w: 7.5, h: 4.3, margin: 0, valign: "top", isTextBox: true, objectName: nm("fade", "concl") });
 s.addText("Thank you \u00b7 questions welcome", { x: 0.75, y: 6.55, w: 6, h: 0.45, fontFace: HEAD, fontSize: 21, italic: true,
   color: APRICOT, margin: 0, isTextBox: true, objectName: nm("fade", "thanks") });
-s.addNotes("SPEAKER 4 (1 min). The answer to the topic question is yes, with a condition: both the model and its evaluation have to account for observer bias. Corrected models find species citizen science missed in two independent systems. What we add: a protocol that scores only the missed pairs, the first real-data demonstration on identical pairs that the common validation shortcuts reward observer bias, an audit of the survey truth, and a forecast of where new records will appear. The practical advice follows directly. The limits are real: birds only, Kerala only for India, and no eBird. Thank you.");
+s.addNotes("SPEAKER 4 (1 min). The answer to the topic question is yes, with a condition: both the model and its evaluation have to account for observer bias. Corrected models find species citizen science missed in two independent systems, and a more powerful CNN does not change that. What we add: a protocol that scores only the missed pairs, the first real-data demonstration on identical pairs that the common validation shortcuts reward observer bias, an audit of the survey truth, and a forecast of where new records will appear. The practical advice follows directly. And a small independent survey, 20 to 40 sites, is enough to choose the right model. The limits are real: birds only for the gap-filling result, Kerala only for India, and no eBird. Thank you.");
 
 pres.writeFile({ fileName: path.join(__dirname, "deck_raw.pptx") }).then(async () => {
   await applyTheme(path.join(__dirname, "deck_raw.pptx"), THEME);
